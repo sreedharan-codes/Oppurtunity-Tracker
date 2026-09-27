@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync": "node scripts/sync.js",
+    "push": "git add -A && git commit -m \"feat: update project files\" && git push origin main"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
