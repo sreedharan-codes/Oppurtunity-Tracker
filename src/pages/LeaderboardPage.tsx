@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import type { Application, Bookmark } from '../types';
+import type { Application, Bookmark, UniversityLeaderboard } from '../types';
 import {
   INITIAL_STUDENT_LEADERBOARD,
   INITIAL_UNIVERSITY_LEADERBOARD,
@@ -10,15 +10,15 @@ import {
   Trophy,
   Award,
   Medal,
-  Sparkles,
   Building2,
   Users,
   Search,
-  ExternalLink,
   ChevronRight,
-  TrendingUp,
-  Star,
   CheckCircle2,
+  Info,
+  X,
+  Flame,
+  ArrowUpRight,
 } from 'lucide-react';
 
 interface LeaderboardPageProps {
@@ -36,6 +36,8 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
   const [activeView, setActiveView] = useState<'students' | 'universities'>('students');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUniversityFilter, setSelectedUniversityFilter] = useState('All');
+  const [selectedUniDetail, setSelectedUniDetail] = useState<UniversityLeaderboard | null>(null);
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState<boolean>(false);
 
   // Compute live user score & breakdown
   const { score: currentUserScore, breakdown: scoreBreakdown } = useMemo(() => {
@@ -248,7 +250,14 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
             <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
               Your Total Score
             </span>
-            <Sparkles className="w-4 h-4 text-[#d8ff3e]" />
+            <button
+              type="button"
+              onClick={() => setShowScoreBreakdown(true)}
+              className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition-colors"
+              title="View Point Calculation Formula"
+            >
+              <Info className="w-4 h-4 text-gray-500 hover:text-black" />
+            </button>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-3xl font-black text-gray-950">
@@ -258,13 +267,22 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
               pts
             </span>
           </div>
-          <button
-            onClick={() => onNavigateTab('profile')}
-            className="text-[11px] text-gray-500 hover:text-black font-bold mt-1 text-left flex items-center gap-1"
-          >
-            <span>Add skills & awards to climb</span>
-            <ChevronRight className="w-3 h-3" />
-          </button>
+          <div className="flex items-center justify-between gap-1 mt-1">
+            <button
+              onClick={() => onNavigateTab('profile')}
+              className="text-[11px] text-gray-500 hover:text-black font-bold text-left flex items-center gap-1"
+            >
+              <span>Add skills to climb</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowScoreBreakdown(true)}
+              className="text-[10px] font-bold text-blue-600 hover:underline"
+            >
+              View Formula
+            </button>
+          </div>
         </div>
 
         {/* Stat 4: Top University Banner */}
@@ -601,11 +619,11 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
                     </div>
                   </div>
 
-                  {/* Top Skills Represented */}
+                  {/* Top Skills Represented & View Modal Button */}
                   <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-2 mt-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] font-bold text-gray-400 mr-1">Dominant Skills:</span>
-                      {uni.topSkills.map((sk) => (
+                      <span className="text-[10px] font-bold text-gray-400 mr-1">Top Skills:</span>
+                      {uni.topSkills.slice(0, 3).map((sk) => (
                         <span
                           key={sk}
                           className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#eaebef] text-gray-800"
@@ -615,13 +633,168 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({
                       ))}
                     </div>
 
-                    <span className="text-xs font-extrabold text-gray-700 shrink-0">
-                      {uni.totalAchievements} Awards 🏆
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUniDetail(uni)}
+                      className="px-3 py-1.5 rounded-full bg-[#15161a] hover:bg-black text-white text-[11px] font-bold flex items-center gap-1 transition-all active:scale-95 shrink-0"
+                    >
+                      <span>Explore</span>
+                      <ArrowUpRight className="w-3 h-3 text-[#d8ff3e]" />
+                    </button>
                   </div>
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 1: POINTS FORMULA & BREAKDOWN */}
+      {showScoreBreakdown && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[32px] max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-gray-100 space-y-6 relative animate-scale-up">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#d8ff3e] flex items-center justify-center text-black font-black">
+                  <Flame className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-950">Leaderboard Points Formula</h3>
+                  <p className="text-xs text-gray-500 font-medium">Deterministic score breakdown for your profile</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowScoreBreakdown(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+              {scoreBreakdown.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-gray-100/70 transition-colors"
+                >
+                  <div>
+                    <span className="text-xs font-black text-gray-900 block">{item.label}</span>
+                    <span className="text-[11px] text-gray-500 font-medium">
+                      {item.count} {item.count === 1 ? 'item' : 'items'} registered
+                    </span>
+                  </div>
+                  <span className="text-sm font-black text-gray-950 font-sans">
+                    +{item.points.toLocaleString()} pts
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+              <span className="text-sm font-black text-gray-950 uppercase tracking-wider">Total Candidate Score</span>
+              <span className="text-2xl font-black text-gray-950 font-sans">{currentUserScore.toLocaleString()} pts</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowScoreBreakdown(false);
+                onNavigateTab('profile');
+              }}
+              className="w-full py-3.5 rounded-full bg-black text-white text-xs font-black hover:bg-gray-900 transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <span>Boost Your Score in Profile</span>
+              <ChevronRight className="w-3.5 h-3.5 text-[#d8ff3e]" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: UNIVERSITY DETAIL & STUDENT CONTRIBUTORS */}
+      {selectedUniDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[32px] max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-gray-100 space-y-6 relative animate-scale-up max-h-[85vh] flex flex-col">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <span className="w-12 h-12 rounded-2xl bg-gray-950 text-[#d8ff3e] font-black text-lg flex items-center justify-center shrink-0">
+                  #{selectedUniDetail.rank}
+                </span>
+                <div>
+                  <h3 className="text-xl font-black text-gray-950 leading-tight">{selectedUniDetail.university}</h3>
+                  <p className="text-xs text-gray-500 font-medium mt-0.5">
+                    {selectedUniDetail.activeStudents} active student contributors · {selectedUniDetail.totalScore.toLocaleString()} total pts
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedUniDetail(null)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-gray-400">Campus Competencies:</span>
+              {selectedUniDetail.topSkills.map((sk) => (
+                <span key={sk} className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#eaebef] text-gray-800">
+                  {sk}
+                </span>
+              ))}
+            </div>
+
+            {/* List of Students representing this university */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 mb-2">
+                Top Student Contributors on Leaderboard
+              </h4>
+              {combinedStudents
+                .filter(
+                  (s) =>
+                    s.college.toLowerCase().includes(selectedUniDetail.university.toLowerCase()) ||
+                    selectedUniDetail.university.toLowerCase().includes(s.college.toLowerCase())
+                )
+                .slice(0, 10)
+                .map((st) => (
+                  <div
+                    key={st.id}
+                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                      st.isCurrentUser
+                        ? 'bg-[#d8ff3e]/20 border-black ring-1 ring-black'
+                        : 'bg-gray-50 border-gray-100 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-black text-xs text-gray-400 w-5">#{st.rank}</span>
+                      <img
+                        src={st.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(st.name)}`}
+                        alt={st.name}
+                        className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                      />
+                      <div>
+                        <span className="text-xs font-black text-gray-950 block">{st.name}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">{st.course} · {st.year}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-black text-gray-950 font-sans block">{st.score.toLocaleString()} pts</span>
+                      <span className="text-[10px] text-gray-400 font-medium">{st.completedCount} completed</span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedUniDetail(null)}
+                className="px-5 py-2.5 rounded-full bg-gray-950 hover:bg-black text-white text-xs font-black transition-colors"
+              >
+                Close Campus View
+              </button>
+            </div>
           </div>
         </div>
       )}

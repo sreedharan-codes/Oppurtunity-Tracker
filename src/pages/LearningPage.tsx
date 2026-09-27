@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getRecommendedCourses } from '../data/learningCoursesData';
 import {
-  GraduationCap,
   PlayCircle,
   Award,
   Sparkles,
@@ -11,11 +10,9 @@ import {
   Clock,
   ExternalLink,
   ChevronRight,
-  Filter,
   CheckCircle2,
-  BookOpen,
-  Zap,
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 interface LearningPageProps {
   onNavigateTab: (tab: string) => void;
@@ -23,9 +20,35 @@ interface LearningPageProps {
 
 export const LearningPage: React.FC<LearningPageProps> = ({ onNavigateTab }) => {
   const { user } = useAuth();
-  const [filterType, setFilterType] = useState<'all' | 'target' | 'youtube' | 'certified' | 'free'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'target' | 'youtube' | 'certified' | 'free' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSkillFilter, setSelectedSkillFilter] = useState('All');
+
+  // Track completed course IDs in localStorage
+  const [completedCourses, setCompletedCourses] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('flux_completed_courses');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleCourseCompleted = (courseId: string) => {
+    setCompletedCourses((prev) => {
+      const isDone = prev.includes(courseId);
+      const updated = isDone ? prev.filter((id) => id !== courseId) : [...prev, courseId];
+      try {
+        localStorage.setItem('flux_completed_courses', JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      if (!isDone) {
+        confetti({ particleCount: 35, spread: 60 });
+      }
+      return updated;
+    });
+  };
 
   // User skills
   const userSkills = useMemo(() => user?.skills || ['Python', 'React', 'Machine Learning'], [user]);
@@ -54,6 +77,7 @@ export const LearningPage: React.FC<LearningPageProps> = ({ onNavigateTab }) => 
       if (filterType === 'youtube' && course.type !== 'youtube') return false;
       if (filterType === 'certified' && course.type !== 'certified') return false;
       if (filterType === 'free' && !course.free) return false;
+      if (filterType === 'completed' && !completedCourses.includes(course.id)) return false;
 
       // Skill filter
       if (selectedSkillFilter !== 'All') {
@@ -75,7 +99,7 @@ export const LearningPage: React.FC<LearningPageProps> = ({ onNavigateTab }) => 
 
       return true;
     });
-  }, [courses, filterType, selectedSkillFilter, searchQuery]);
+  }, [courses, filterType, selectedSkillFilter, searchQuery, completedCourses]);
 
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-up select-none">
@@ -160,6 +184,7 @@ export const LearningPage: React.FC<LearningPageProps> = ({ onNavigateTab }) => 
             { id: 'target', label: '🎯 Target Skill Match' },
             { id: 'youtube', label: '🎥 YouTube Videos' },
             { id: 'certified', label: '🎓 Certified Credentials' },
+            { id: 'completed', label: `✅ Completed (${completedCourses.length})` },
             { id: 'free', label: '100% Free' },
           ].map((tab) => (
             <button
@@ -227,17 +252,26 @@ export const LearningPage: React.FC<LearningPageProps> = ({ onNavigateTab }) => 
 
                   {/* Top Badges */}
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-                    {course.type === 'youtube' ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black shadow-md">
-                        <PlayCircle className="w-3 h-3" />
-                        YouTube Course
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7a7bf8] text-white text-[10px] font-black shadow-md">
-                        <Award className="w-3 h-3" />
-                        Official Certificate
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {course.type === 'youtube' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black shadow-md">
+                          <PlayCircle className="w-3 h-3" />
+                          YouTube Course
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7a7bf8] text-white text-[10px] font-black shadow-md">
+                          <Award className="w-3 h-3" />
+                          Official Certificate
+                        </span>
+                      )}
+
+                      {completedCourses.includes(course.id) && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-black shadow-md">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Done +150 pts
+                        </span>
+                      )}
+                    </div>
 
                     {course.free ? (
                       <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-black shadow-md">
@@ -311,17 +345,32 @@ export const LearningPage: React.FC<LearningPageProps> = ({ onNavigateTab }) => 
                 </div>
               </div>
 
-              {/* Action Button */}
-              <div className="p-5 pt-0">
+              {/* Action Buttons */}
+              <div className="p-5 pt-0 flex items-center gap-2">
                 <a
                   href={course.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 px-4 rounded-full bg-[#15161a] hover:bg-black text-white text-xs font-black flex items-center justify-center gap-2 transition-all duration-200 shadow-sm group-hover:shadow active:scale-95"
+                  className="flex-1 py-3 px-4 rounded-full bg-[#15161a] hover:bg-black text-white text-xs font-black flex items-center justify-center gap-2 transition-all duration-200 shadow-sm group-hover:shadow active:scale-95"
                 >
-                  <span>{course.type === 'youtube' ? 'Watch Full Course on YouTube' : 'Enroll in Credential'}</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#d8ff3e]" />
+                  <span className="truncate">
+                    {course.type === 'youtube' ? 'Watch Course' : 'Enroll Credential'}
+                  </span>
+                  <ExternalLink className="w-3.5 h-3.5 text-[#d8ff3e] shrink-0" />
                 </a>
+
+                <button
+                  type="button"
+                  onClick={() => toggleCourseCompleted(course.id)}
+                  title={completedCourses.includes(course.id) ? 'Mark as incomplete' : 'Mark as completed (+150 pts)'}
+                  className={`px-3 py-3 rounded-full text-xs font-bold transition-all duration-200 shrink-0 flex items-center justify-center ${
+                    completedCourses.includes(course.id)
+                      ? 'bg-emerald-500 text-white shadow-sm hover:bg-emerald-600'
+                      : 'bg-gray-100 hover:bg-[#d8ff3e] text-gray-700 hover:text-black border border-gray-200'
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
           );

@@ -230,6 +230,26 @@ export const ProfileEditor: React.FC = () => {
               {formData.course || 'Complete your student details'}
             </p>
 
+            {/* Quick Metrics Bar: Campus + Skills + Estimated Leaderboard Score */}
+            <div className="flex items-center gap-2 flex-wrap mt-3">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 text-[11px] font-bold">
+                <Building2 className="w-3 h-3 text-accent" />
+                {formData.college ? formData.college.split(' ')[0] : 'Campus Unset'}
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent/15 text-accent text-[11px] font-bold">
+                <Sparkles className="w-3 h-3" />
+                {skills.length} Skills
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#b5b6ff]/20 text-[#6064f5] dark:text-[#b5b6ff] text-[11px] font-bold">
+                <Target className="w-3 h-3" />
+                {targetSkills.length} Goals
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[11px] font-black">
+                <Trophy className="w-3 h-3" />
+                {achievements.length} Accolades
+              </span>
+            </div>
+
             {/* Profile Completion Bar */}
             <div className="mt-4 max-w-md">
               <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
