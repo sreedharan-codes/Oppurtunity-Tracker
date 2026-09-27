@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    // 1. User Profiles:
+    // Anyone authenticated can read user profiles (or restricted to self)
+    // Only the user themselves or an admin can create or update their profile
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 2. Opportunities:
+    // Anyone (even public or authenticated) can read published opportunities
+    // Admins can read all (including drafts)
+    // Only admins can create, update, or delete opportunities
+    match /opportunities/{opportunityId} {
+      allow read: if (resource.data.status == 'published') || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 3. Applications:
+    // Students can only read, create, update, or delete their own applications
+    // Admins can read all applications for metrics
+    match /applications/{applicationId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // 4. Bookmarks:
+    // Students can only read, create, or delete their own bookmarks
+    // Admins can read all for analytics
+    match /bookmarks/{bookmarkId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+  }
+}
