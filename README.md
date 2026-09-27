@@ -46,14 +46,31 @@
   course: string;
   year: string;
   skills: string[];               // e.g. ["Python", "React", "AI/ML", "SQL"]
+  targetSkills?: string[];        // Upcoming learning goals e.g. ["Next.js", "System Design"]
+  achievements?: string[];        // Verified honors e.g. ["1st Place Hackathon"]
   interests: string[];            // e.g. ["Artificial Intelligence", "Full-Stack"]
   preferredTypes: string[];       // ["Internship", "Hackathon", "Workshop"]
   preferredMode: "Online" | "Offline" | "Hybrid" | "Any";
   role: "student" | "admin";
+  leaderboardScore?: number;      // Calculated student leaderboard rank score
   createdAt: string | Timestamp;
   updatedAt: string | Timestamp;
 }
 ```
+
+---
+
+## 🏆 New Platform Features
+
+### 1. Leaderboard & University Campus Rankings
+- **Deterministic Student Scoring**: Computes live leaderboard points derived from Verified Skills (+120 pts), Target Learning Goals (+60 pts), Verified Achievements (+300 pts), and Completed Opportunities (+350 pts).
+- **University Standings**: Aggregates verified student points into institutional campus rankings (`Stanford`, `MIT`, `UC Berkeley`, `CMU`, `Harvard`, `Georgia Tech`, `IIT Bombay`, `UW`), showing campus pipeline dominance and talent density.
+- **Campus Talent Explorer**: Interactive modal displaying top student representatives for each university.
+
+### 2. Personalized Learning Pathways
+- **Skills-Matched Recommendation Engine**: Dynamically matches courses to both existing competencies and upcoming target skills (`targetSkills`), marked with high-visibility target priority tags.
+- **Dual Course Streams**: Curated YouTube deep-dives (*freeCodeCamp*, *DeepLearning.AI*, *NeetCode*, *Traversy Media*) alongside accredited credentials (*AWS Skill Builder*, *Google Cloud*, *Stanford Online*, *Harvard CS50*).
+- **Interactive Completion Tracker**: Students can mark courses as completed to trigger celebrations and earn +150 points.
 
 ### 2. `opportunities/{opportunityId}`
 ```typescript
